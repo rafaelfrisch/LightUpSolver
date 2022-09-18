@@ -5,11 +5,11 @@ class NodeStates:
     LIGHT = "L"
     WALL = "#"
     EMPTY = "."
-    WALL0 = "0"
-    WALL1 = "1"
-    WALL2 = "2"
-    WALL3 = "3"
-    WALL4 = "4"
+    WALL_LIGHT_0 = "0"
+    WALL_LIGHT_1 = "1"
+    WALL_LIGHT_2 = "2"
+    WALL_LIGHT_3 = "3"
+    WALL_LIGHT_4 = "4"
 
 class OverallStates:
     INVALID = 0
@@ -22,6 +22,10 @@ class Node:
         self.state = state
         self.x = x
         self.y = y
+
+    def node_is_wall(self):
+        is_not_wall = self.state == NodeStates.LIGHT or self.state == NodeStates.EMPTY
+        return not is_not_wall
 
     def __str__(self):
         return str([self.state, self.x, self.y])
@@ -48,8 +52,40 @@ class AdjacencyElementNode:
     def update_left(self, left):
         self.left = left
 
+    def adjacency_array(self):
+        return [self.up, self.down, self.right, self.left]
+
     def __repr__(self):
         return str([self.up, self.down, self.right, self.left])
+
+class Backtracker:
+    def __init__(self, adjacency_matrix, nodes, map_size):
+        self.adjacency_matrix = adjacency_matrix
+        self.board = nodes
+        self.map_size = map_size
+    
+    def print_board(self):
+        print("BOARD:")
+        for row_index in range(0, self.map_size[0]):
+            for column_index in range(0, self.map_size[1]):
+                print(self.board[row_index][column_index].state, end="")
+            print("")           
+
+    def solve(self):
+        wall_nodes_not_solved = []
+        for node in self.adjacency_matrix:
+            # WALL 4 elements should always have 4 lights around
+            if (node.state == NodeStates.WALL_LIGHT_4):
+                adjacency_element_node = self.adjacency_matrix[node]
+                for adjacenty_node in adjacency_element_node.adjacency_array():
+                    adjacenty_node.state = NodeStates.LIGHT
+            elif (node.node_is_wall()):
+                wall_nodes_not_solved.append(node)
+        self.print_board()
+        
+
+        
+                
 
 def get_map_size(lines):
     x = lines[0].split(" ")[0]
@@ -57,7 +93,7 @@ def get_map_size(lines):
     return (int(x),int(y))
 
 def get_game_map_matrix():
-    with open('./data/game1.txt') as game_data:
+    with open('./data/game2.txt') as game_data:
         lines = game_data.read().splitlines()
         map_size = get_map_size(lines)
         map_matrix = np.zeros((map_size[0], map_size[1]), str)
@@ -96,5 +132,7 @@ def create_adjacency_matrix(map_matrix, map_size):
 def solve_game():
     map_matrix, map_size = get_game_map_matrix()
     adjacency_matrix, nodes = create_adjacency_matrix(map_matrix, map_size)
-    
+    backtracker = Backtracker(adjacency_matrix, nodes, map_size)
+    backtracker.solve()
+
 solve_game()
