@@ -1,3 +1,4 @@
+import xxlimited
 import numpy as np
 
 class NodeStates:
@@ -23,17 +24,32 @@ class Node:
         self.y = y
 
     def __str__(self):
-        return self.state
+        return str([self.state, self.x, self.y])
 
     def __repr__(self):
-        return self.state
+        return str([self.state, self.x, self.y])
 
-class AdjancyElementNode:
-    def __init__(self, up, down, right, left):
+class AdjacencyElementNode:
+    def __init__(self):
+        self.up = None
+        self.down = None
+        self.right = None
+        self.left = None
+
+    def update_up(self, up):
         self.up = up
+
+    def update_down(self, down):
         self.down = down
+
+    def update_right(self, right):
         self.right = right
+
+    def update_left(self, left):
         self.left = left
+
+    def __repr__(self):
+        return str([self.up, self.down, self.right, self.left])
 
 def get_map_size(lines):
     x = lines[0].split(" ")[0]
@@ -45,24 +61,40 @@ def get_game_map_matrix():
         lines = game_data.read().splitlines()
         map_size = get_map_size(lines)
         map_matrix = np.zeros((map_size[0], map_size[1]), str)
-        for x_index in range(0, map_size[0]):
-            for y_index in range(0, map_size[1]):
-                map_matrix[x_index, y_index] = lines[x_index+1][y_index]
+        for row_index in range(0, map_size[0]):
+            for column_index in range(0, map_size[1]):
+                map_matrix[row_index, column_index] = lines[row_index+1][column_index]
         return map_matrix, map_size
 
 def create_adjacency_matrix(map_matrix, map_size):
     x_size, y_size = map_size
     nodes = np.empty(map_size, Node)
-    for x_index in range(0, x_size):
-        for y_index in range(0, y_size):
-            nodes[x_index][y_index] = Node(map_matrix[x_index][y_index], x_index, y_index)
+    for row_index in range(0, x_size):
+        for column_index in range(0, y_size):
+            nodes[row_index][column_index] = Node(map_matrix[row_index][column_index], row_index, column_index)
 
     adjacency_matrix = {}
-    print(nodes)
+    
+    for row_index in range(0, x_size):
+        for column_index in range(0, y_size):
+            adjacency_element = AdjacencyElementNode()
+            node = nodes[row_index][column_index]
+
+            if row_index-1 >= 0:
+                adjacency_element.update_up(nodes[row_index-1][column_index])
+            if row_index+1 < y_size:
+                adjacency_element.update_down(nodes[row_index+1][column_index])
+            if column_index-1 >= 0:
+                adjacency_element.update_left(nodes[row_index][column_index-1])  
+            if column_index+1 < x_size:
+                adjacency_element.update_right(nodes[row_index][column_index+1])
+
+            adjacency_matrix[node] = adjacency_element                          
+
     return adjacency_matrix, nodes
 
 def solve_game():
     map_matrix, map_size = get_game_map_matrix()
     adjacency_matrix, nodes = create_adjacency_matrix(map_matrix, map_size)
-
+    
 solve_game()
