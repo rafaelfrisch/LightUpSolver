@@ -1,6 +1,6 @@
 import numpy as np
 
-game_file_path = './data/falsegame.txt'
+game_file_path = './data/game2.txt'
 
 class NodeStates:
     LIGHT = "L"
@@ -81,7 +81,7 @@ class Backtracker:
                     adjacenty_node.state = NodeStates.LIGHT
             elif (node.node_is_wall()):
                 wall_nodes_not_solved.append(node)
-        self.backtrack(wall_nodes_not_solved)
+        result = self.backtrack(wall_nodes_not_solved)
         self.print_board()
 
     def can_place_light_ray(self, node):
@@ -140,16 +140,151 @@ class Backtracker:
 
         return True
 
+    def num_adjacent_lights(self, node):
+        adjacency_element_node = self.adjacency_matrix[node]
+        num_adjacents_lights = 0
+
+        if adjacency_element_node.up is not None:
+            if adjacency_element_node.up.state == NodeStates.LIGHT:
+                num_adjacents_lights+=1
+
+        if adjacency_element_node.down is not None:
+            if adjacency_element_node.down.state == NodeStates.LIGHT:
+                num_adjacents_lights+=1        
+
+        if adjacency_element_node.right is not None:
+            if adjacency_element_node.right.state == NodeStates.LIGHT:
+                num_adjacents_lights+=1
+
+        if adjacency_element_node.left is not None:
+            if adjacency_element_node.left.state == NodeStates.LIGHT:
+                num_adjacents_lights+=1
+
+        return num_adjacents_lights
+
+    def get_dark_squares(self):
+        dark_squares = []
+        for node in self.adjacency_matrix:
+            if node.state == NodeStates.EMPTY:
+                if self.can_place_light_ray(node) == True:
+                    dark_squares.append(node)
+        return dark_squares
+
     def get_game_state(self):
+        game_completed = True
+        dark_squares = self.get_dark_squares()
+        if (len(dark_squares) != 0):
+            game_completed = False
+
         for node in self.adjacency_matrix:
             if(node.state == NodeStates.LIGHT):
                 valid = self.can_place_light_ray(node)
-                #print(valid, node)
+                if not valid:
+                    return GameStates.INVALID
+            else:
+                if (node.state == NodeStates.WALL_LIGHT_0):
+                    adj_lights = self.num_adjacent_lights(node)
+                    if (adj_lights > 0):
+                        return GameStates.INVALID
+                    if (adj_lights !=0):
+                        game_completed = False
+                elif (node.state == NodeStates.WALL_LIGHT_1):
+                    adj_lights = self.num_adjacent_lights(node)
+                    if (adj_lights > 1):
+                        return GameStates.INVALID
+                    if (adj_lights !=1):
+                        game_completed = False                    
+                elif (node.state == NodeStates.WALL_LIGHT_2):
+                    adj_lights = self.num_adjacent_lights(node)
+                    if (adj_lights > 2):
+                        return GameStates.INVALID
+                    if (adj_lights !=2):
+                        game_completed = False
+                elif (node.state == NodeStates.WALL_LIGHT_3):
+                    self.num_adjacent_lights(node)
+                    if (adj_lights > 3):
+                        return GameStates.INVALID
+                    if (adj_lights !=3):
+                        game_completed = False
+                elif (node.state == NodeStates.WALL_LIGHT_4):
+                    adj_lights = self.num_adjacent_lights(node)
+                    if (adj_lights > 4):
+                        return GameStates.INVALID
+                    if (adj_lights !=4):
+                        game_completed = False
+        if game_completed:
+              return GameStates.COMPLETED
+          
+        return GameStates.VALID
 
     def backtrack(self, wall_nodes_not_solved):
-        self.get_game_state()
+        game_state = self.get_game_state()
 
+        if game_state != GameStates.VALID:
+            return game_state
 
+        while len(wall_nodes_not_solved) > 0:
+            wall_node =  wall_nodes_not_solved.pop()
+            possibleLightCombinations = []
+            adjacency_element_node = self.adjacency_matrix[wall_node]
+            adjacency_array =  adjacency_element_node.adjacency_array()
+
+            if wall_node.state == NodeStates.WALL_LIGHT_1:
+                for adjacent_node in adjacency_array:
+                    if adjacent_node.state == NodeStates.EMPTY:
+                        possibleLightCombinations.append([adjacent_node])
+
+            elif wall_node.state == NodeStates.WALL_LIGHT_2:
+                if adjacency_array[0].state == NodeStates.EMPTY and adjacency_array[1].state == NodeStates.EMPTY:
+                    possibleLightCombinations.append([adjacency_array[0], adjacency_array[1]])
+                if adjacency_array[1].state == NodeStates.EMPTY and adjacency_array[2].state == NodeStates.EMPTY:
+                    possibleLightCombinations.append([adjacency_array[1], adjacency_array[2]])
+                if adjacency_array[2].state == NodeStates.EMPTY and adjacency_array[3].state == NodeStates.EMPTY:
+                    possibleLightCombinations.append([adjacency_array[2], adjacency_array[3]])
+                if adjacency_array[3].state == NodeStates.EMPTY and adjacency_array[0].state == NodeStates.EMPTY:
+                    possibleLightCombinations.append([adjacency_array[3], adjacency_array[0]])
+                if adjacency_array[3].state == NodeStates.EMPTY and adjacency_array[1].state == NodeStates.EMPTY:
+                    possibleLightCombinations.append([adjacency_array[3], adjacency_array[1]])
+                if adjacency_array[0].state == NodeStates.EMPTY and adjacency_array[2].state == NodeStates.EMPTY:
+                    possibleLightCombinations.append([adjacency_array[0], adjacency_array[2]])
+
+            elif wall_node.state == NodeStates.WALL_LIGHT_3:
+                if adjacency_array[3].state == NodeStates.EMPTY and adjacency_array[0].state == NodeStates.EMPTY and adjacency_array[1].state == NodeStates.EMPTY:
+                    possibleLightCombinations.append([adjacency_array[3], adjacency_array[0], adjacency_array[1]])
+                if adjacency_array[0].state == NodeStates.EMPTY and adjacency_array[1].state == NodeStates.EMPTY and adjacency_array[2].state == NodeStates.EMPTY:
+                    possibleLightCombinations.append([adjacency_array[0], adjacency_array[1], adjacency_array[2]])
+                if adjacency_array[1].state == NodeStates.EMPTY and adjacency_array[2].state == NodeStates.EMPTY and adjacency_array[3].state == NodeStates.EMPTY:
+                    possibleLightCombinations.append([adjacency_array[1], adjacency_array[2], adjacency_array[3]])
+                if adjacency_array[2].state == NodeStates.EMPTY and adjacency_array[3].state == NodeStates.EMPTY and adjacency_array[0].state == NodeStates.EMPTY:
+                    possibleLightCombinations.append([adjacency_array[2], adjacency_array[3], adjacency_array[0]])            
+
+            # backtracking
+            for possibleLights in possibleLightCombinations:
+                for node in possibleLights:
+                    node.state = NodeStates.LIGHT
+                
+                backtrack = self.backtrack(wall_nodes_not_solved.copy())
+
+                # reset invalid state
+                if backtrack == GameStates.INVALID:
+                    for node in possibleLights:
+                        node.state = NodeStates.EMPTY
+            
+            # empty dark squares
+            if len(wall_nodes_not_solved) == 0:
+                dark_squares = self.get_dark_squares()
+
+                for node in dark_squares:
+                    node.state = NodeStates.LIGHT
+
+                    backtrack = self.backtrack(wall_nodes_not_solved.copy())
+
+                    # reset invalid state
+                    if backtrack == GameStates.INVALID:
+                        node.state = NodeStates.EMPTY
+                    elif backtrack == GameStates.COMPLETED:
+                        return GameStates.COMPLETED
+            return GameStates.INVALID
 
 def get_map_size(lines):
     x = lines[0].split(" ")[0]
