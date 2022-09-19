@@ -1,5 +1,6 @@
-import xxlimited
 import numpy as np
+
+game_file_path = './data/falsegame.txt'
 
 class NodeStates:
     LIGHT = "L"
@@ -11,11 +12,10 @@ class NodeStates:
     WALL_LIGHT_3 = "3"
     WALL_LIGHT_4 = "4"
 
-class OverallStates:
+class GameStates:
     INVALID = 0
     VALID = 1
-    COMPLETE = 2
-    CANNOT_FINISH = 3
+    COMPLETED = 2
 
 class Node:
     def __init__(self, state, x, y):
@@ -81,11 +81,75 @@ class Backtracker:
                     adjacenty_node.state = NodeStates.LIGHT
             elif (node.node_is_wall()):
                 wall_nodes_not_solved.append(node)
+        self.backtrack(wall_nodes_not_solved)
         self.print_board()
-        
 
+    def can_place_light_ray(self, node):
+        adjacency_element_node = self.adjacency_matrix[node]
         
-                
+        x_position_node = node.x
+        y_position_node = node.y
+
+        # check if theres is light in every direction
+
+        up_node = adjacency_element_node.up
+        for index in range(1, node.x+1):
+            if(up_node is None):
+                break
+            if(up_node.node_is_wall()):
+                break
+            if(up_node.state == NodeStates.LIGHT):
+                return False
+
+            up_node = self.board[x_position_node-index][y_position_node]
+
+
+        down_node = adjacency_element_node.down
+        for index in range(1, self.map_size[1] - node.x):
+            if(down_node is None):
+                break
+            if(down_node.node_is_wall()):
+                break
+            if(down_node.state == NodeStates.LIGHT):
+                return False
+
+            down_node = self.board[x_position_node+index][y_position_node]
+
+        right_node = adjacency_element_node.right
+        for index in range(1, self.map_size[1] - node.y):
+            
+            if(right_node is None):
+                break
+            if(right_node.node_is_wall()):
+                break
+            if(right_node.state == NodeStates.LIGHT):
+                return False
+            
+            right_node = self.board[x_position_node][y_position_node+index]
+
+        left_node = adjacency_element_node.left
+        
+        for index in range(1, node.y+1):
+            if(left_node is None):
+                break
+            if(left_node.node_is_wall()):
+                break
+            if(left_node.state == NodeStates.LIGHT):
+                return False
+            left_node = self.board[x_position_node][y_position_node-index]
+
+        return True
+
+    def get_game_state(self):
+        for node in self.adjacency_matrix:
+            if(node.state == NodeStates.LIGHT):
+                valid = self.can_place_light_ray(node)
+                #print(valid, node)
+
+    def backtrack(self, wall_nodes_not_solved):
+        self.get_game_state()
+
+
 
 def get_map_size(lines):
     x = lines[0].split(" ")[0]
@@ -93,7 +157,7 @@ def get_map_size(lines):
     return (int(x),int(y))
 
 def get_game_map_matrix():
-    with open('./data/game2.txt') as game_data:
+    with open(game_file_path) as game_data:
         lines = game_data.read().splitlines()
         map_size = get_map_size(lines)
         map_matrix = np.zeros((map_size[0], map_size[1]), str)
