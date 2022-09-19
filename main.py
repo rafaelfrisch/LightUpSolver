@@ -82,7 +82,6 @@ class Backtracker:
             elif (node.node_is_wall()):
                 wall_nodes_not_solved.append(node)
         result = self.backtrack(wall_nodes_not_solved)
-        self.print_board()
 
     def can_place_light_ray(self, node):
         adjacency_element_node = self.adjacency_matrix[node]
@@ -212,6 +211,7 @@ class Backtracker:
                         return GameStates.INVALID
                     elif (adj_lights !=4):
                         game_completed = False
+        
         if game_completed:
               return GameStates.COMPLETED
           
@@ -219,7 +219,7 @@ class Backtracker:
 
     def backtrack(self, wall_nodes_not_solved):
         game_state = self.get_game_state()
-        self.print_board()
+        
         if game_state != GameStates.VALID:
             return game_state
         
